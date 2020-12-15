@@ -1,16 +1,33 @@
 import png
 import argparse
 
-def readFile():
-    r = png.Reader(filename='shiba_samuraiNOEL2.png')
-    t = r.read()
-    print(t[3]['alpha'])
-    if t[3]['alpha']:
-        print("RGBA")
-        t.asRGBA()
+def readFile(textToWrite):
+    imageFile = png.Reader(filename='shiba_samuraiNOEL2.png')
+    imageRead = imageFile.read()
+    print(imageRead)
+
+    if imageRead[3]['alpha']:
+        imageReadRGBA = imageFile.asRGBA()
+        listOfPixels=list(imageReadRGBA[2])
+        arrayOfBinaryPixels = []
+        for i in range (len(listOfPixels)):
+            arrayOfBinaryPixels.append([convertIntToBinary(x) for x in listOfPixels[i]])
+        i = 0
+        for m in range(len(textToWrite)):
+            i = int(m/len(arrayOfBinaryPixels[0]))
+            j = m % len(arrayOfBinaryPixels[0])
+            # print(arrayOfBinaryPixels[i][j])
+            stringToList = list(arrayOfBinaryPixels[i][j])
+            stringToList[-1] = textToWrite[m]
+            listToString = "".join(stringToList)
+            # print(listToString)
+            # break
     else:
         print("RGB")
 
+def convertIntToBinary(number):
+    binary = '{0:08b}'.format(number)
+    return binary
 
 def convertToAsciiBinary(text):
     fullBinaryText = ""
@@ -31,7 +48,8 @@ if __name__=="__main__":
     if args.t:
         print("t turned on")
         print(convertToAsciiBinary(args.t))
-        readFile()
+        textToWrite = convertToAsciiBinary(args.t)
+        readFile(textToWrite)
     if args.f:
         print("f turned on")
 
