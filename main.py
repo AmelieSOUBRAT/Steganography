@@ -9,21 +9,40 @@ def readFile(textToWrite):
     if imageRead[3]['alpha']:
         imageReadRGBA = imageFile.asRGBA()
         listOfPixels=list(imageReadRGBA[2])
-        arrayOfBinaryPixels = []
+
+        print(listOfPixels[0][0])
+
+        arrayOfPixels = []
         for i in range (len(listOfPixels)):
-            arrayOfBinaryPixels.append([convertIntToBinary(x) for x in listOfPixels[i]])
-        i = 0
+            arrayOfPixels.append([x for x in listOfPixels[i]])
+        # i = 0
+
+        # for i in range(len(arrayOfBinaryPixels)):
+        #     for j in range (len(arrayOfBinaryPixels[0])):
+        #         arrayOfBinaryPixels[i][j] = list(arrayOfBinaryPixels[i][j])
         for m in range(len(textToWrite)):
-            i = int(m/len(arrayOfBinaryPixels[0]))
-            j = m % len(arrayOfBinaryPixels[0])
+            i = int(m/len(arrayOfPixels[0]))
+            j = m % len(arrayOfPixels[0])
+
             # print(arrayOfBinaryPixels[i][j])
-            stringToList = list(arrayOfBinaryPixels[i][j])
+            stringToList = list(convertIntToBinary(arrayOfPixels[i][j]))
+            # print(arrayOfBinaryPixels)
             stringToList[-1] = textToWrite[m]
             listToString = "".join(stringToList)
-            # print(listToString)
-            # break
-    else:
-        print("RGB")
+            arrayOfPixels[i][j] = int(listToString, 2)
+            # print(arrayOfBinaryPixels[i])
+
+
+    print(len(listOfPixels[0]))
+    print(len(listOfPixels))
+
+
+    f = open('swatch4.png', 'wb')
+    w = png.Writer(703, 614, greyscale=False, bitdepth=8, alpha=True)
+    w.write(f, arrayOfPixels)
+    f.close()
+    # else:
+    #     print("RGB")
 
 def convertIntToBinary(number):
     binary = '{0:08b}'.format(number)
