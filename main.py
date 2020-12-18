@@ -3,28 +3,55 @@ import argparse
 import subprocess
 
 def convertPNGAsGoodFormat(imageFile, alpha):
-    if alpha:
-        return imageFile.asRGBA()
-    else:
-        return imageFile.asRGB()
+    '''
+    Convert an image in the good format (RGBA/RGB)
 
-def writePNG(textToWrite, imageFile):
-    imageFile = png.Reader(filename=imageFile)
+            Parameters:
+                    imageFile (png.Reader): image convert to be convert on tuple of informations
+                    alpha (bool): a boolean value according to the number of planes; 4 is true, 3 is false
+
+            Returns:
+                    imageRead (tuple): Tuple of all information on the image file 
+    '''
+
+    if alpha:
+        imageRead = imageFile.asRGBA()
+    else:
+        imageRead = imageFile.asRGB()
+    return imageRead
+
+def writePNG(textToWrite, imageFileName):
+    '''
+    Write text in a PNG
+
+            Parameters:
+                    textToWrite (string): text to write in the image file in binary
+                    imageFileName (string): name of the image file
+
+            Returns:
+                    True/False (boolean): True if the text is write in the image file, if not False
+    '''
+
+    imageFile = png.Reader(filename=imageFileName)
     imageRead = imageFile.read()
-    
+
     alpha = imageRead[3]['alpha']
+    height = imageRead[1]
+    width = imageRead[0]
+    greyscale = imageRead[3]['greyscale']
+    bitdepth = imageRead[3]['bitdepth']
+    planes = imageRead[3]['planes']
 
     imageRead = convertPNGAsGoodFormat(imageFile, alpha)
-    
+   
     listOfPixels = list(imageRead[2])
+
     arrayOfPixels = []
     for i in range (len(listOfPixels)):
         arrayOfPixels.append([x for x in listOfPixels[i]])
     
-    height = imageRead[1]
-    width = imageRead[0]*imageRead[3]['planes']
-    if (len(textToWrite) <= height*width):
-
+    
+    if (len(textToWrite) <= height*width*planes):
         for m in range(len(textToWrite)):
             i = int(m/len(arrayOfPixels[0]))
             j = m % len(arrayOfPixels[0])
@@ -33,16 +60,26 @@ def writePNG(textToWrite, imageFile):
             listToString = "".join(stringToList)
             arrayOfPixels[i][j] = int(listToString, 2)
 
-        f = open('swatch4.png', 'wb')
-        w = png.Writer(703, 614, greyscale=False, bitdepth=8, alpha=True)
+        f = open('image_2.png', 'wb')
+        w = png.Writer(width, height, greyscale=greyscale, bitdepth=bitdepth, alpha=alpha)
         w.write(f, arrayOfPixels)
         f.close()
-        print("SUCCESS : message is write in the PNG")
-        return
-    print("ERROR : length of the text is too big")
-    return
+        # print("SUCCESS : text is write in the PNG")
+        return True
+    # print("ERROR : length of the text is too big")
+    return False
 
 def readPNG(imageFile):
+    '''
+    Read text in a PNG
+
+            Parameters:
+                    imageFileName (string): name of the image file
+
+            Returns:
+                    text (string): text read in the PNG
+    '''
+
     imageFile = png.Reader(filename=imageFile)
     imageRead = imageFile.read()
 
@@ -55,45 +92,61 @@ def readPNG(imageFile):
     for i in range (len(listOfPixels)):
         arrayOfPixels.append([x for x in listOfPixels[i]])
 
-    word = ""
-    r = 0
-    binaryListOnCharacter = []
+    text = ""
+    bitdepth = 0
+    letter = []
     for m in range(len(arrayOfPixels)*len(arrayOfPixels[0])):
-        # print(m)
         i = int(m/len(arrayOfPixels[0]))
         j = m % len(arrayOfPixels[0])
         stringToList = list(convertIntToBinary(arrayOfPixels[i][j]))   
-        if r < 8:
-            binaryListOnCharacter.append(stringToList[-1])
-            r = r + 1
-        if r == 8:
-            listToString = "".join(binaryListOnCharacter)
-            word = word + chr(int(listToString, 2))                
-            r = 0
-            binaryListOnCharacter = []
+        if bitdepth < 8:
+            letter.append(stringToList[-1])
+            bitdepth += 1
+        if bitdepth == 8:
+            listToString = "".join(letter)
+            text = text + chr(int(listToString, 2))                
+            bitdepth = 0
+            letter = []
             if listToString == "00000011":
                 break
-    print("SUCCESS : message was read on the PNG")
-    print(word)
+    return text
 
 def convertIntToBinary(number):
-    binary = '{0:08b}'.format(number)
-    return binary
+    '''
+    Convert an integer in base 2
+
+            Parameters:
+                    number (int): a integer to convert
+
+            Returns:
+                    binaryNumber (string): the convertion of integer in base 2 with 8 bits.
+    '''
+
+    binaryNumber = '{0:08b}'.format(number)
+    return binaryNumber
 
 def convertToAsciiBinary(text):
-    fullBinaryText = ""
-    for i in text:
-        binaryText = bin(ord(i)).replace('0b', '')
-        while len(binaryText) < 8:
-            binaryText = '0' + binaryText
-        fullBinaryText += binaryText
-    return fullBinaryText
+    '''
+    Convert an acsii in base 2
+
+            Parameters:
+                    text (string): the text to convert
+
+            Returns:
+                    binaryText (string): the convertion of the text in base 2 with 8 bits.
+    '''
+
+    binaryText = ""
+    for letter in text:
+        binaryLetter = convertIntToBinary(ord(letter))
+        binaryText += binaryLetter
+    return binaryText
 
 if __name__ == "__main__": 
-    parser = argparse.ArgumentParser(description = '')
-    parser.add_argument("imageFile", type = str, help = "image file")
-    parser.add_argument("-t", type = str, help = "Text")
-    parser.add_argument("-f", type = str, help = "File")
+    parser = argparse.ArgumentParser(description = "Write or read text in a PNG file")
+    parser.add_argument("imageFile", type = str, help = "image file to write in it")
+    parser.add_argument("-t", type = str, help = "text to write in the PNG")
+    parser.add_argument("-f", type = str, help = "file to write in the PNG")
     parser.add_argument("-w", help = "write mode", action = "store_true")
     args = parser.parse_args()
 
@@ -103,24 +156,15 @@ if __name__ == "__main__":
         if args.t:
             text = args.t
         elif args.f:
-            print("f turned on")
             textInFile = open(args.f, "r")
             text = textInFile.read()
             textInFile.close()
         else:
-            text = input("Enter your message : ")
+            text = input("Enter your text : ")
         
         text = convertToAsciiBinary(text) + "00000011"
         writePNG(text, imageFile)
 
     else:
         print("LECTURE \n")
-        readPNG(imageFile)
-    
-
-# ARGPARSE, 
-# VERIF LONGUEUR MESSAGE PAR RAPPORT TAILLE IMAGE - 8 (END OF TEXT)
-#LECTURE DANS LE FICHIER
-#SUBPROCESS
-
-#Verifier pour les guillement
+        print(readPNG(imageFile))
