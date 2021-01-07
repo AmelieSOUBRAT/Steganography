@@ -53,7 +53,7 @@ def writePNG(textToWrite, imageFileName):
     
     if (len(textToWrite) <= height*width*planes):
         for m in range(len(textToWrite)):
-            i = int(m/len(arrayOfPixels[0]))
+            i = int(m / len(arrayOfPixels[0]))
             j = m % len(arrayOfPixels[0])
             stringToList = list(convertIntToBinary(arrayOfPixels[i][j]))
             stringToList[-1] = textToWrite[m]
@@ -95,8 +95,8 @@ def readPNG(imageFile):
     text = ""
     bitdepth = 0
     letter = []
-    for m in range(len(arrayOfPixels)*len(arrayOfPixels[0])):
-        i = int(m/len(arrayOfPixels[0]))
+    for m in range(len(arrayOfPixels) * len(arrayOfPixels[0])):
+        i = int(m / len(arrayOfPixels[0]))
         j = m % len(arrayOfPixels[0])
         stringToList = list(convertIntToBinary(arrayOfPixels[i][j]))   
         if bitdepth < 8:
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     imageFile = args.imageFile
     if args.w:
-        print("ECRITURE \n")
+        print("Write")
         if args.t:
             text = args.t
         elif args.f:
@@ -166,5 +166,14 @@ if __name__ == "__main__":
         writePNG(text, imageFile)
 
     else:
-        print("LECTURE \n")
-        print(readPNG(imageFile))
+        print("Read")
+        text = readPNG(imageFile)[ : -1]
+        try:
+            p1 = subprocess.Popen(["echo", text], stdout = subprocess.PIPE)
+            p2 = subprocess.Popen(["strings"], stdin = p1.stdout, stdout = subprocess.PIPE)
+            p1.stdout.close()
+            output = p2.communicate()[0]
+            print(output)
+        except:
+            print ("Can't read the message")
+
